@@ -5,11 +5,11 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from "vue-property-decorator";
-import { Tile, Direction } from "@/models/tile";
+import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Tile, Direction } from '@/models/tile';
 
 @Component({
-  components: {}
+  components: {},
 })
 export default class GameTile extends Vue {
   @Prop()
@@ -32,9 +32,9 @@ export default class GameTile extends Vue {
     const y =
       this.padding + (this.size + this.padding) * this.tile.coordinates.row;
     this.style = {
-      width: this.size + "px",
-      height: this.size + "px",
-      transform: `translate(${x}px, ${y}px)`
+      width: this.size + 'px',
+      height: this.size + 'px',
+      transform: `translate(${x}px, ${y}px)`,
     };
   }
 }

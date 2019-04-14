@@ -1,7 +1,7 @@
 <template>
   <div class="grid" ref="grid" :style="{width: this.gridSize + 'px', height: this.gridSize + 'px'}">
     <GameTile
-      v-for="tile in tileModels"
+      v-for="tile in tiles"
       :key="tile.id"
       :tile="tile"
       :size="tileSize"
@@ -22,31 +22,45 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from "vue-property-decorator";
-import GameTile from "./GameTile.vue";
-import TileScroller, { ScrollEvent } from "./TileScroller.vue";
-import { Tile, Direction } from "@/models/tile";
-import { Scroller, Orientation, NearFar } from "@/models/scroller";
+import { Component, Vue, Prop } from 'vue-property-decorator';
+import GameTile from './GameTile.vue';
+import TileScroller, { ScrollEvent } from './TileScroller.vue';
+import { Tile, Direction } from '@/models/tile';
+import { Scroller, Orientation, NearFar } from '@/models/scroller';
+import { GameState } from '../models/gameState';
 
 @Component({
   components: {
     GameTile,
-    TileScroller
-  }
+    TileScroller,
+  },
 })
 export default class GameGrid extends Vue {
   @Prop()
   public sideSize!: number;
 
+  @Prop()
+  public gameState?: GameState;
+
   private gridSize: number = 720;
 
   private padding: number = 20;
-  private tileModels: Tile[] = [];
+  // private tileModels: Tile[] = [];
+
+  get tiles(): Tile[] {
+    if (!this.gameState) {
+      return [];
+    } else {
+      return this.gameState.tiles;
+    }
+  }
 
   private scrollers: Scroller[] = [];
 
   public handleTileScroll(e: ScrollEvent) {
-    console.log(e);
+    if (this.gameState) {
+      this.gameState.scrollTiles(e.direction, e.position);
+    }
   }
 
   get size() {
@@ -58,31 +72,16 @@ export default class GameGrid extends Vue {
   }
 
   public mounted() {
-    const newTiles: Tile[] = [];
-    let id = 0;
-    let directions: Direction[] = ["up", "down", "left", "right"];
-    for (let row = 0; row < this.sideSize; row++) {
-      for (let col = 0; col < this.sideSize; col++) {
-        newTiles.push(
-          new Tile(
-            id++,
-            { row, column: col },
-            directions.filter(d => Math.random() >= 0.5)
-          )
-        );
-      }
-    }
-    this.tileModels = newTiles;
-
     const newScrollers: Scroller[] = [];
-    const possibleOrientations: Orientation[] = ["horizontal", "vertical"];
-    const possibleNearFar: NearFar[] = ["first", "last"];
+    const possibleOrientations: Orientation[] = ['horizontal', 'vertical'];
+    const possibleNearFar: NearFar[] = ['first', 'last'];
+    let id = 0;
     for (const orientation of possibleOrientations) {
       for (const nearFar of possibleNearFar) {
         for (let position = 0; position < this.sideSize; position++) {
           if (position % 2 === 1) {
             newScrollers.push(
-              new Scroller(position, orientation, nearFar, id++)
+              new Scroller(position, orientation, nearFar, 's' + id++),
             );
           }
         }

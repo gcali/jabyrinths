@@ -3,8 +3,9 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop, Emit } from "vue-property-decorator";
-import { Orientation, NearFar } from "../models/scroller";
+import { Component, Vue, Prop, Emit } from 'vue-property-decorator';
+import { Orientation, NearFar } from '../models/scroller';
+import { Direction } from '../models/tile';
 
 export interface Sizes {
   thin: number;
@@ -16,14 +17,34 @@ export interface Spacing {
 }
 
 export interface ScrollEvent {
-  orientation: Orientation;
   position: number;
-  nearFar: NearFar;
+  direction: Direction;
 }
 @Component({
-  components: {}
+  components: {},
 })
 export default class TileScroller extends Vue {
+
+  public get style() {
+    const horizontal = this.orientation === 'horizontal';
+    const delta = this.spacing.delta * this.position + this.spacing.border;
+    return {
+      width: this.appendPx(horizontal ? this.size.large : this.size.thin),
+      height: this.appendPx(horizontal ? this.size.thin : this.size.large),
+      top: this.appendPx(
+        horizontal ? (this.nearFar === 'first' ? 0 : undefined) : delta,
+      ),
+      bottom: this.appendPx(
+        horizontal && this.nearFar === 'last' ? 0 : undefined,
+      ),
+      left: this.appendPx(
+        horizontal ? delta : this.nearFar === 'first' ? 0 : undefined,
+      ),
+      right: this.appendPx(
+        !horizontal && this.nearFar === 'last' ? 0 : undefined,
+      ),
+    };
+  }
   @Prop({ required: true })
   public orientation!: Orientation;
   @Prop({ required: true })
@@ -35,42 +56,36 @@ export default class TileScroller extends Vue {
   @Prop({ required: true })
   public position!: number;
 
-  private appendPx(e: any): string {
-    if (e) {
-      return e + "px";
+  @Emit('scroll')
+  public scroll(): ScrollEvent {
+    return {
+      position: this.position,
+      direction: this.direction,
+    };
+  }
+
+  private get direction() {
+    if (this.orientation === 'horizontal') {
+      if (this.nearFar === 'first') {
+        return 'up';
+      } else {
+        return 'down';
+      }
     } else {
-      return e;
+      if (this.nearFar === 'first') {
+        return 'left';
+      } else {
+        return 'right';
+      }
     }
   }
 
-  @Emit("scroll")
-  public scroll(): ScrollEvent {
-    return {
-      orientation: this.orientation,
-      position: this.position,
-      nearFar: this.nearFar
-    };
-  }
-
-  public get style() {
-    const horizontal = this.orientation === "horizontal";
-    const delta = this.spacing.delta * this.position + this.spacing.border;
-    return {
-      width: this.appendPx(horizontal ? this.size.large : this.size.thin),
-      height: this.appendPx(horizontal ? this.size.thin : this.size.large),
-      top: this.appendPx(
-        horizontal ? (this.nearFar === "first" ? 0 : undefined) : delta
-      ),
-      bottom: this.appendPx(
-        horizontal && this.nearFar === "last" ? 0 : undefined
-      ),
-      left: this.appendPx(
-        horizontal ? delta : this.nearFar === "first" ? 0 : undefined
-      ),
-      right: this.appendPx(
-        !horizontal && this.nearFar === "last" ? 0 : undefined
-      )
-    };
+  private appendPx(e: any): string {
+    if (e) {
+      return e + 'px';
+    } else {
+      return e;
+    }
   }
 }
 </script>
