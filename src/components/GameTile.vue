@@ -1,6 +1,7 @@
 <template>
-  <div class="tile" :style="style">
+  <div :class="['tile', {'targettable': targettable}]" :style="style">
     <div v-for="direction in directions" :key="direction" :class="direction"/>
+    <div v-if="player" class="player" :style="{backgroundColor: `${playerColor}`, color: `${playerColor}`}"/>
   </div>
 </template>
 
@@ -23,6 +24,20 @@ export default class GameTile extends Vue {
 
   @Prop()
   public padding!: number;
+
+  @Prop({default: () => null})
+  public player?: string;
+
+  @Prop({default: () => true})
+  public targettable!: boolean;
+
+  private get playerColor(): string | null {
+    if (!this.player) {
+      return null;
+    }
+    return this.player;
+  }
+
 
   private style: any = {};
 
@@ -98,6 +113,35 @@ export default class GameTile extends Vue {
   .down {
     @include up;
     top: 70%;
+  }
+  .player {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    border-radius: 50%;
+    width: 25%;
+    height: 25%;
+  }
+  .player-blue {
+    background-color: blue;
+    color: blue;
+  }
+  .player-yellow {
+    background-color: yellow;
+    color: yellow;
+  }
+  .player-red {
+    background-color: red;
+    color: red;
+  }
+  .player-green {
+    background-color: green;
+    color: green;
+  }
+
+  &.targettable:hover {
+    border: 1px solid white;
   }
 }
 </style>

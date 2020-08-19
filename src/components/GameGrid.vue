@@ -7,6 +7,8 @@
       :size="tileSize"
       :padding="padding"
       :directions="tile.directions"
+      :player="calculatePlayer(tile)"
+      :targettable="gameState.isTargettable(tile)"
     />
     <TileScroller
       v-for="scroller in scrollers"
@@ -17,6 +19,7 @@
       :spacing="{delta: tileSize + padding, border: padding + 4}"
       :size="{thin: padding - 3, large: tileSize - 8}"
       @scroll="handleTileScroll"
+      :disabled="gameState.hasScrolled"
     />
   </div>
 </template>
@@ -28,6 +31,7 @@ import TileScroller, { ScrollEvent } from './TileScroller.vue';
 import { Tile, Direction } from '@/models/tile';
 import { Scroller, Orientation, NearFar } from '@/models/scroller';
 import { GameState } from '../models/gameState';
+import { manhattan } from '@/models/geometry';
 
 @Component({
   components: {
@@ -53,6 +57,17 @@ export default class GameGrid extends Vue {
     } else {
       return this.gameState.tiles;
     }
+  }
+
+  public calculatePlayer(tile: Tile): string | null {
+    if (this.gameState) {
+      for (const player of this.gameState.playerState) {
+        if (manhattan(player.coordinates, tile.coordinates) === 0) {
+          return player.type;
+        }
+      }
+    }
+    return null;
   }
 
   private scrollers: Scroller[] = [];

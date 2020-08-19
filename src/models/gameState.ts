@@ -1,9 +1,13 @@
-import { Size } from './geometry';
+import { Size, manhattan } from './geometry';
 import { Tile, Direction } from './tile';
+import { Player } from './playerState';
 
 export class GameState {
 
-    public static async generate(size: number): Promise<GameState> {
+    public static async generate(size: number, players: number): Promise<GameState> {
+        if (players < 1 || players > 4) {
+            throw new Error("Cannot create a game with " + players + " players");
+        }
         const tiles: Tile[] = [];
         const id = 0;
         const directions: Direction[] = ['up', 'down', 'left', 'right'];
@@ -19,28 +23,57 @@ export class GameState {
             }
         }
 
-        return new GameState(
+        const chosenPlayers = ["red", "blue", "yellow", "green"].slice(0,players);
+
+        const gameState = new GameState(
             tiles,
             new Tile(
                 // id++,
                 { row: 0, column: 0 },
                 directions.filter((d) => Math.random() >= 0.5),
             ),
+            chosenPlayers
         );
+        gameState.currentPlayer = gameState.playerState[0];
+        return gameState;
 
     }
     private size: Size;
 
-    constructor(public tiles: Tile[], public pickedTile: Tile) {
+    public playerState: Player[];
+
+    public currentPlayer: Player | null = null;
+
+    public hasScrolled: boolean = false;
+
+    public isTargettable(tile: Tile) {
+        if (this.currentPlayer === null) {
+            return false;
+        }
+        return manhattan(this.currentPlayer.coordinates, tile.coordinates) === 1;
+    }
+
+    constructor(public tiles: Tile[], public pickedTile: Tile, players: string[]) {
         const maxRow = Math.max(...tiles.map((t) => t.coordinates.row));
         const maxCol = Math.max(...tiles.map((t) => t.coordinates.column));
         this.size = {
             height: maxRow + 1,
             width: maxCol + 1,
         };
+        const corners = [
+            {row: 0, column: 0},
+            {row: maxRow, column: maxCol},
+            {row: 0, column: maxCol},
+            {row: maxRow, column: 0},
+        ];
+        this.playerState = players.map((p,i) => new Player(p, p, corners[i]));
     }
 
     public scrollTiles(direction: Direction, index: number) {
+        if (this.hasScrolled) {
+            return;
+        }
+        this.hasScrolled = true;
         const oldPicked = this.pickedTile;
         this.tiles
             .filter((t) => this.shouldTileBeScrolled(direction, index, t))
@@ -51,6 +84,18 @@ export class GameState {
         this.tiles = this.tiles.sort((a, b) => (
             (a.coordinates.row - b.coordinates.row) * this.size.width + (a.coordinates.column - b.coordinates.column)
         ));
+    }
+
+    public confirm() {
+        this.hasScrolled = false;
+        if (this.currentPlayer) {
+            this.currentPlayer.isMoving = false;
+            const lastIndex = this.playerState.indexOf(this.currentPlayer);
+            this.currentPlayer = this.playerState[(lastIndex + 1) % this.playerState.length];
+        } else {
+            this.currentPlayer = this.playerState[0];
+        }
+
     }
 
     private updatePickedCoordinates(tile: Tile, direction: Direction, index: number) {

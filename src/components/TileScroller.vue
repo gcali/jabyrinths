@@ -1,5 +1,5 @@
 <template>
-  <div @click="scroll" :class="['scroller', this.orientation, this.nearFar]" :style="style"></div>
+  <div @click="scroll" :class="['scroller', this.orientation, this.nearFar, {'disabled': this.disabled}]" :style="style"></div>
 </template>
 
 <script lang="ts">
@@ -55,6 +55,8 @@ export default class TileScroller extends Vue {
   public spacing!: Spacing;
   @Prop({ required: true })
   public position!: number;
+  @Prop({default: () => false})
+  public disabled!: boolean;
 
   @Emit('scroll')
   public scroll(): ScrollEvent {
@@ -96,6 +98,11 @@ $radius: 6px;
 .scroller {
   background-color: red;
   position: absolute;
+  cursor: pointer;
+  &.disabled {
+    cursor: default;
+    background-color: darkred;
+  }
 }
 .horizontal {
   &.first {
